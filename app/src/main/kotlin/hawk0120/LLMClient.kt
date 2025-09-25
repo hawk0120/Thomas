@@ -1,12 +1,22 @@
 package hawk0120
 
+import com.google.gson.Gson
 import org.springframework.stereotype.Service
 import java.net.HttpURLConnection
 import java.io.*
 import java.net.URL
 
+data class LLMRequest(
+    val model: String,
+    val prompt: String,
+    val stream: Boolean
+)
+data class LLMResponse(val response: String)
+
 @Service
 class LLMClient {
+    private val gson = Gson()
+
     fun query(prompt: String): String {
         val url = URL("http://localhost:11434/api/generate")
         val connection = url.openConnection() as HttpURLConnection
@@ -14,13 +24,8 @@ class LLMClient {
         connection.setRequestProperty("Content-Type", "application/json")
         connection.doOutput = true
 
-        val requestBody = """
-            {
-              "model": "gemma2:2b",
-              "prompt": "$prompt",
-              "stream": false
-            }
-        """.trimIndent()
+        val request = LLMRequest("gemma2:2b", prompt, false)
+        val requestBody = gson.toJson(request)
 
         OutputStreamWriter(connection.outputStream).use { it.write(requestBody) }
 
@@ -29,15 +34,12 @@ class LLMClient {
     }
 
     private fun extractResponse(rawJson: String): String {
-				val marker = "\"response\":\""
-        val start = rawJson.indexOf(marker)
-        val end = rawJson.indexOf("\"", start + marker.length)
-        return if (start != -1 && end != -1) {
-            rawJson.substring(start + marker.length, end)
-        } else rawJson
+        return try {
+            val parsed = gson.fromJson(rawJson, LLMResponse::class.java)
+            parsed.response
+        } catch (e: Exception) {
+            rawJson
+        }
     }
-
-
-
 }
 
