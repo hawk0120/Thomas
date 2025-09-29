@@ -1,16 +1,17 @@
-package hawk0120;
+package hawk0120.entities
 
 import jakarta.persistence.*
-import org.hibernate.type.descriptor.DateTimeUtils
-import java.sql.Timestamp
-import java.time.Instant
+import kotlinx.serialization.Serializable
 
+
+@Serializable
 @Entity
 @Table(name = "WorkingMemory")
 data class WorkingMemory(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Int = 0,
+    @Column(columnDefinition = "TEXT")
     var memory: String,
     var personaId: String? = null,
 ) {
@@ -18,12 +19,14 @@ data class WorkingMemory(
 }
 
 
+@Serializable
 @Entity
 @Table(name = "ArchivalMemory")
 data class ArchivalMemory(
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     val id: Int = 0,
+    @Column(columnDefinition = "TEXT")
     var memory: String,
     var personaId: String? = null,
 ) {

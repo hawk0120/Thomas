@@ -1,6 +1,6 @@
 package hawk0120.repositories
 
-import hawk0120.WorkingMemory
+import hawk0120.entities.WorkingMemory
 import org.springframework.data.jpa.repository.JpaRepository
 import org.springframework.stereotype.Repository
 

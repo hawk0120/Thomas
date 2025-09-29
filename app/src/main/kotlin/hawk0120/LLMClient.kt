@@ -11,6 +11,7 @@ data class LLMRequest(
     val prompt: String,
     val stream: Boolean
 )
+
 data class LLMResponse(val response: String)
 
 @Service
@@ -24,7 +25,7 @@ class LLMClient {
         connection.setRequestProperty("Content-Type", "application/json")
         connection.doOutput = true
 
-        val request = LLMRequest("gemma2:2b", prompt, false)
+        val request = LLMRequest("gemma3:1b", prompt, false)
         val requestBody = gson.toJson(request)
 
         OutputStreamWriter(connection.outputStream).use { it.write(requestBody) }

@@ -1,16 +1,18 @@
 package hawk0120.tools
-/*
-class HooksDispatcher(private val memoryStore: MemoryStore, private val reflector: Reflector) {
-    fun handleInteraction(input: String, response: String) {
-        val entry = MemoryEntry(
-            content = "User: $input\nAgent: $response",
-            tags = setOf("interaction")
-        )
-        memoryStore.add(entry)
 
-        // Trigger summarization and reflection hooks
-        val summary = memoryStore.summarizeRecent()
-        reflector.reflect(summary)
+class ToolDispatcher {
+
+    private val registry: Map<Tool, ToolStrategy<*, *>> = mapOf(
+        Tool.SAVE_MEMORY to SaveMemoryStrategy(),
+        Tool.DELETE_MEMORY to DeleteMemoryStrategy(),
+        Tool.GET_MEMORY to GetMemoryStrategy(),
+        Tool.POST_OUTPUT to PostOutputStrategy(),
+        )
+
+
+    fun <Input, Output> dispatch(tool: Tool, args: Input): Output? {
+        val strategy = registry[tool] as? ToolStrategy<Input, Output>
+        return strategy?.execute(args)
     }
 }
-*/
+
