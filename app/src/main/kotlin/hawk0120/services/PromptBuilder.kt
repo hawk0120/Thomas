@@ -7,7 +7,7 @@ import java.time.LocalDateTime
 @Component
 class PromptBuilder(
     @Autowired private val memoryService: MemoryService,
-    @Autowired private val promptService: PromptService
+    @Autowired private val promptService: PromptService,
 ) {
     private var prompt = StringBuilder()
 
@@ -40,14 +40,10 @@ class PromptBuilder(
     }
 
     fun setInteraction(input: String): PromptBuilder {
-        prompt.append("\nThe user input follows: \n")
+        prompt.append("\nInstructions:\n")
         prompt.append(input)
         return this
     }
 
-    fun build(): String {
-        return prompt.toString()
-    }
-
-
+    fun build(): String = prompt.toString()
 }

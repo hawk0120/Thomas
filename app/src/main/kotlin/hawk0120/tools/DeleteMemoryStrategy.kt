@@ -1,7 +1,13 @@
 package hawk0120.tools
 
-class DeleteMemoryStrategy : ToolStrategy<String, String> {
+import hawk0120.services.MemoryService
+import org.springframework.beans.factory.annotation.Autowired
+
+class DeleteMemoryStrategy @Autowired constructor(
+    private val memoryService: MemoryService
+) : ToolStrategy<String, String> {
     override fun execute(input: String): String {
-        TODO("DeleteMemoryStrategy")
+        memoryService.forgetWorkingMemory()
+        return "Working memory deleted."
     }
 }

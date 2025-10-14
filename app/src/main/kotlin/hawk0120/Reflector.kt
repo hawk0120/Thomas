@@ -4,13 +4,15 @@ import hawk0120.entities.ArchivalMemory
 import hawk0120.entities.WorkingMemory
 import hawk0120.services.MemoryService
 import hawk0120.services.PromptBuilder
+import hawk0120.tools.DeleteMemoryStrategy
+import hawk0120.tools.GetMemoryStrategy
+import hawk0120.tools.PostOutputStrategy
+import hawk0120.tools.SaveMemoryStrategy
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
-import org.hibernate.type.descriptor.DateTimeUtils
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.CommandLineRunner
 import org.springframework.stereotype.Component
-import java.time.LocalDate
 
 @Component
 class Reflector(
@@ -24,14 +26,14 @@ class Reflector(
 
         memoryService.checkMemoryExists(memories, input, personaId, 1)
 
-        val prompt = promptBuilder
-            .setSysPrompt()
-            .setPersona(personaId)
-            .setTimeAwareness()
-            .setMemories()
-            .setInteraction(input)
-            .build()
-
+        val prompt =
+            promptBuilder
+                .setSysPrompt()
+                .setPersona(personaId)
+                .setTimeAwareness()
+                .setMemories()
+                .setInteraction(input)
+                .build()
 
         val output = llm.query(prompt)
 
@@ -41,10 +43,7 @@ class Reflector(
 
         return response.toString()
     }
-
-
 }
-
 
 @Component
 class ReflectorRunner(
@@ -54,20 +53,35 @@ class ReflectorRunner(
 ) : CommandLineRunner {
 
     override fun run(vararg args: String?) {
+
+        val toolCommands = listOf("SAVE_MEMORY", "DELETE_MEMORY", "GET_MEMORY", "POST_OUTPUT")
+
         while (true) {
             print("User:>>> ")
             val input = readLine() ?: break
+
             if (input.equals(".exit")) {
                 break
             }
 
             val response = reflector.reflect(input, "Brady")
             println(response)
+            val foundTool = toolCommands.find { response.contains(it) }
+            if (foundTool != null) {
+                when (foundTool) {
+                    "POST_OUTPUT" -> PostOutputStrategy().execute(response)
+                    "SAVE_MEMORY" -> println(SaveMemoryStrategy(memoryService).execute(response))
+                    "DELETE_MEMORY" -> println(DeleteMemoryStrategy(memoryService).execute(response))
+                    "GET_MEMORY" -> println(GetMemoryStrategy(memoryService).execute(response))
+                }
+            }
+
+
+
         }
 
         memoryService.saveArchivalMemory(
             ArchivalMemory(
-                id = Integer.valueOf(LocalDate.now().toString()),
                 personaId = "Brady",
                 memory = Json.encodeToString(memoryService.recallWorkingMemory())
             )
@@ -75,9 +89,7 @@ class ReflectorRunner(
 
         memoryService.forgetWorkingMemory()
 
-        val exitPrompt = promptBuilder
-            .setExitPrompt()
-            .build()
+        val exitPrompt = promptBuilder.setExitPrompt().build()
 
         println(reflector.reflect(exitPrompt, "Brady"))
     }
