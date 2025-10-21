@@ -4,8 +4,9 @@ import hawk0120.entities.ArchivalMemory
 import hawk0120.entities.WorkingMemory
 import hawk0120.services.MemoryService
 import hawk0120.services.PromptBuilder
-import hawk0120.tools.DeleteMemoryStrategy
+import hawk0120.services.PromptService
 import hawk0120.tools.GetMemoryStrategy
+import hawk0120.tools.GetUserInputCLIStrategy
 import hawk0120.tools.PostOutputStrategy
 import hawk0120.tools.SaveMemoryStrategy
 import kotlinx.serialization.encodeToString
@@ -21,28 +22,32 @@ class Reflector(
     private val memoryService: MemoryService
 ) {
     val memories: MutableList<WorkingMemory> = memoryService.recallWorkingMemory()
+    var personaId: String = PERSONA_THOMAS
 
-    fun reflect(input: String, personaId: String): String {
-
-        memoryService.checkMemoryExists(memories, input, personaId, 1)
+    fun reflect(memory: String, author: String?): String {
+        if (author != null) {
+            personaId = author
+        }
+        memoryService.checkMemoryExists(memories, memory, personaId)
 
         val prompt =
             promptBuilder
-                .setSysPrompt()
                 .setPersona(personaId)
                 .setTimeAwareness()
                 .setMemories()
-                .setInteraction(input)
+                .setInteraction(memory)
                 .build()
 
         val output = llm.query(prompt)
 
-        memoryService.checkMemoryExists(memories, output, "Thomas", 2)
-        val response = StringBuilder().append("Thomas: ")
+        memoryService.checkMemoryExists(memories, output, PERSONA_THOMAS)
+        val response = StringBuilder().append("$PERSONA_THOMAS:")
         response.append(output)
 
         return response.toString()
     }
+
+
 }
 
 @Component
@@ -50,39 +55,41 @@ class ReflectorRunner(
     @Autowired private val promptBuilder: PromptBuilder,
     @Autowired private val memoryService: MemoryService,
     @Autowired private val reflector: Reflector,
+    @Autowired private val blueSkyService: hawk0120.services.BlueSkyService,
+    @Autowired private val postOutputStrategy: PostOutputStrategy,
+    @Autowired private val getUserInputCLIStrategy: GetUserInputCLIStrategy,
+    @Autowired private val promptService: PromptService
 ) : CommandLineRunner {
 
     override fun run(vararg args: String?) {
+        val toolCommands = listOf("SAVE_MEMORY", "GET_USER_INPUT_CLI", "GET_MEMORY", "POST_OUTPUT")
 
-        val toolCommands = listOf("SAVE_MEMORY", "DELETE_MEMORY", "GET_MEMORY", "POST_OUTPUT")
 
         while (true) {
-            print("User:>>> ")
-            val input = readLine() ?: break
-
-            if (input.equals(".exit")) {
-                break
+            println("Thinking Loop running")
+            if (blueSkyService.login()) {
+                println("Getting bluesky mentions")
+                blueSkyService.getMentions(reflector)
             }
-
-            val response = reflector.reflect(input, "Brady")
+            val response = reflector.reflect(
+                memoryService.recallWorkingMemory().lastOrNull()?.memory ?: promptService.getSystemPrompt(), null
+            )
             println(response)
+
             val foundTool = toolCommands.find { response.contains(it) }
             if (foundTool != null) {
                 when (foundTool) {
-                    "POST_OUTPUT" -> PostOutputStrategy().execute(response)
+                    "CALL_FOR_HELP_CLI" -> println(getUserInputCLIStrategy.execute(response))
+                    "POST_OUTPUT" -> println(postOutputStrategy.execute(response))
                     "SAVE_MEMORY" -> println(SaveMemoryStrategy(memoryService).execute(response))
-                    "DELETE_MEMORY" -> println(DeleteMemoryStrategy(memoryService).execute(response))
                     "GET_MEMORY" -> println(GetMemoryStrategy(memoryService).execute(response))
                 }
             }
-
-
-
         }
 
         memoryService.saveArchivalMemory(
             ArchivalMemory(
-                personaId = "Brady",
+                personaId = ADMINISTRATOR,
                 memory = Json.encodeToString(memoryService.recallWorkingMemory())
             )
         )
@@ -91,6 +98,6 @@ class ReflectorRunner(
 
         val exitPrompt = promptBuilder.setExitPrompt().build()
 
-        println(reflector.reflect(exitPrompt, "Brady"))
+        println(reflector.reflect(exitPrompt, null))
     }
 }

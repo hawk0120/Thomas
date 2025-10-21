@@ -24,9 +24,10 @@ class PromptBuilder(
     }
 
     fun setPersona(personaId: String): PromptBuilder {
-        prompt.append("You are speaking with $personaId\n")
+        prompt.append("This input came from: $personaId\n")
         return this
     }
+
 
     fun setExitPrompt(): PromptBuilder {
         prompt.append(promptService.getExitPrompt())
@@ -39,8 +40,18 @@ class PromptBuilder(
         return this
     }
 
+    fun setBlueskyInteraction(input: String): PromptBuilder {
+        prompt.append("You previously posted this to bluesky")
+        return this
+    }
+
     fun setInteraction(input: String): PromptBuilder {
         prompt.append("\nInstructions:\n")
+        prompt.append(input)
+        return this
+    }
+
+    fun setSpecialMessage(input: String): PromptBuilder {
         prompt.append(input)
         return this
     }

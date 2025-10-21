@@ -21,6 +21,7 @@ class LLMClient {
     private val gson = Gson()
 
     fun query(prompt: String): String {
+        println("LLMClient query initiated")
         val url = URL("http://localhost:11434/api/generate")
         val connection = url.openConnection() as HttpURLConnection
         connection.requestMethod = "POST"

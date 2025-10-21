@@ -9,6 +9,7 @@ class GetMemoryStrategy @Autowired constructor(
     private val memoryService: MemoryService
 ) : ToolStrategy<String, String> {
     override fun execute(input: String): String {
+        println("GetMemoryStrategy executed")
         val memories = memoryService.recallWorkingMemory()
         return "Current working memories: ${Json.encodeToString(memories)}"
     }
