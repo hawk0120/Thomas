@@ -4,18 +4,15 @@ import org.springframework.stereotype.Component
 
 @Component
 class PromptService {
-
     private fun loadResource(path: String): String =
-        {}.javaClass.getResourceAsStream(path)
+        {}
+            .javaClass
+            .getResourceAsStream(path)
             ?.bufferedReader()
             ?.readText()
             ?: throw IllegalStateException("Resource $path not found")
 
-    fun getExitPrompt(): String {
-        return loadResource("/exitPrompt.txt")
-    }
+    fun getExitPrompt(): String = loadResource("/exitPrompt.txt")
 
-    fun getSystemPrompt():String {
-        return loadResource("/initialPrompt.txt")
-    }
+    fun getSystemPrompt(): String = loadResource("/initialPrompt.txt")
 }

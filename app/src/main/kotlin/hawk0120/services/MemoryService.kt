@@ -1,9 +1,12 @@
 package hawk0120.services
 
+import hawk0120.Reflector
 import hawk0120.entities.ArchivalMemory
 import hawk0120.entities.WorkingMemory
 import hawk0120.repositories.ArchivalMemoryRepository
 import hawk0120.repositories.WorkingMemoryRepository
+import hawk0120.tools.GetMemoryStrategy
+import hawk0120.tools.SaveMemoryStrategy
 import org.springframework.stereotype.Service
 
 @Service
@@ -16,28 +19,22 @@ class MemoryService(
 
     fun recallWorkingMemory(): MutableList<WorkingMemory> = workingMemoryRepository.findAll()
 
-
-    fun saveWorkingMemory(workingMemory: String, personaId: String, id: Int) {
+    fun saveWorkingMemory(workingMemory: String, personaId: String) {
 
         workingMemoryRepository.save(
-            WorkingMemory(
-                personaId = personaId,
-                id = id,
-                memory = workingMemory
-            )
+            WorkingMemory(personaId = personaId, memory = workingMemory)
         )
-
     }
 
     fun forgetWorkingMemory() = workingMemoryRepository.deleteAll()
 
-    fun saveArchivalMemory(archivalMemory: ArchivalMemory) = archivalMemoryRepository.save(archivalMemory)
+    fun saveArchivalMemory(archivalMemory: ArchivalMemory) =
+        archivalMemoryRepository.save(archivalMemory)
 
     fun recallPriorConversationsWithPersonaId(personaId: String): List<ArchivalMemory> =
         archivalMemoryRepository.findByPersonaId(personaId)
 
     fun getArchivalMemory(): List<ArchivalMemory> = archivalMemoryRepository.findAll()
-
 
     fun getAllMemory(personaId: String): Pair<List<WorkingMemory>, List<ArchivalMemory>> {
         val working = workingMemoryRepository.findByPersonaId(personaId)
@@ -45,9 +42,25 @@ class MemoryService(
         return working to archival
     }
 
-    fun checkMemoryExists(memories: MutableList<WorkingMemory>, memory: String, personaId: String, id: Int) {
+    fun checkMemoryExists(
+        memories: MutableList<WorkingMemory>,
+        memory: String,
+        personaId: String,
+    ) {
+        println("MemoryService - Checking memory exists")
         if (memories.none { it.memory == memory }) {
-            saveWorkingMemory(memory, personaId, id)
+            saveWorkingMemory(memory, personaId)
+        }
+    }
+
+
+    fun startThinkingLoop(reflector: Reflector, promptService: PromptService, memoryService: MemoryService) {
+        while (true) {
+            println("Thinking Loop running")
+            val response = reflector.reflect(
+                memoryService.recallWorkingMemory().lastOrNull()?.memory ?: promptService.getSystemPrompt(), null
+            )
+            println(response)
         }
     }
 }

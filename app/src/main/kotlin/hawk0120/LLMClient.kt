@@ -2,23 +2,26 @@ package hawk0120
 
 import com.google.gson.Gson
 import org.springframework.stereotype.Service
-import java.net.HttpURLConnection
 import java.io.*
+import java.net.HttpURLConnection
 import java.net.URL
 
 data class LLMRequest(
     val model: String,
     val prompt: String,
-    val stream: Boolean
+    val stream: Boolean,
 )
 
-data class LLMResponse(val response: String)
+data class LLMResponse(
+    val response: String,
+)
 
 @Service
 class LLMClient {
     private val gson = Gson()
 
     fun query(prompt: String): String {
+        println("LLMClient query initiated")
         val url = URL("http://localhost:11434/api/generate")
         val connection = url.openConnection() as HttpURLConnection
         connection.requestMethod = "POST"
@@ -34,13 +37,11 @@ class LLMClient {
         return extractResponse(raw)
     }
 
-    private fun extractResponse(rawJson: String): String {
-        return try {
+    private fun extractResponse(rawJson: String): String =
+        try {
             val parsed = gson.fromJson(rawJson, LLMResponse::class.java)
             parsed.response
         } catch (e: Exception) {
             rawJson
         }
-    }
 }
-

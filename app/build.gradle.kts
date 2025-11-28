@@ -34,11 +34,19 @@ dependencies {
     // Utilities
     implementation("com.google.guava:guava:32.1.2-jre")
     implementation("com.google.code.gson:gson:2.10.1")
+	implementation("io.github.cdimascio:dotenv-kotlin:6.5.1")
+
+    // HTTP
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+
+    // JSON
+    implementation("org.json:json:20240303")
 
     // Testing
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
     testImplementation("org.junit.jupiter:junit-jupiter-engine:5.10.0")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
 }
 
 
@@ -64,4 +72,3 @@ application {
 tasks.named<Test>("test") {
     useJUnitPlatform()
 }
-

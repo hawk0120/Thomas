@@ -1,6 +1,5 @@
 package hawk0120
 
-
 import org.springframework.boot.autoconfigure.SpringBootApplication
 import org.springframework.boot.runApplication
 
